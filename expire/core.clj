@@ -93,13 +93,15 @@
 (defn drop-nth [n coll]
   (keep-indexed #(if (not= %1 n) %2) coll))
 
-(defn delete-marked-row [data-table]
-  (let [current-data     (data-store/read-ds-from-file data-file)
-        selected-row-idx (.getSelectedRow data-table)]
-    (when (> selected-row-idx -1)
-      (data-store/write-ds-to-file
-        (drop-nth selected-row-idx current-data)
-        data-file)
+(defn drop-all [indexes coll]
+  (keep-indexed #(if (not (.contains indexes %1)) %2) coll))
+
+;; Multiple rows may be deleted at once.
+(defn delete-marked-rows [data-table]
+  (let [current-data (data-store/read-ds-from-file data-file)
+        selected-rows (into [] (.getSelectedRows data-table))]
+    (when (not (empty? selected-rows))
+      (data-store/write-ds-to-file (drop-all selected-rows current-data) data-file)
       (display-database! data-table (data-store/read-ds-from-file data-file)))))
 
 (defn add-row [data-table]
@@ -126,7 +128,7 @@
   (flow-panel
     :items
     [(button :text "Add task" :preferred-size [170 :by 27] :listen [:action (fn [event] (add-row data-table))])
-     (button :text "Remove task" :preferred-size [170 :by 27] :listen [:action (fn [event] (delete-marked-row data-table))])
+     (button :text "Remove task" :preferred-size [170 :by 27] :listen [:action (fn [event] (delete-marked-rows data-table))])
      (button :text "Edit task" :preferred-size [170 :by 27] :listen [:action (fn [event] (edit-marked-row data-table))])]))
 
 (defn -main []
